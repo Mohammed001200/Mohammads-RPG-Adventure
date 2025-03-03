@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Defender</title>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta property="og:title" content="Dungeon Defender">
+<meta property="og:description" content="Brave warrior, defend the kingdom from monsters!">
+<meta property="og:image" content="https://yourdomain.com/game-screenshot.jpg">
+
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'MedievalSharp', cursive;
+            background: #000;
+            color: #f0d090;
+            text-align: center;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #gameCanvas {
+            border: 4px solid #8b5a2b;
+            background-color: #000;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(43, 29, 14, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10;
+            border: 3px solid #8b5a2b;
+            width: 500px;
+            max-width: 90vw;
+        }
+        
+        .screen h1 {
+            color: #f0d090;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        
+        .screen p {
+            color: #d0b080;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #8b5a2b, #6d4520);
+            border: 2px solid #f0d090;
+            color: #f0d090;
+            padding: 15px 32px;
+            text-align: center;
+            display: inline-block;
+            font-size: 18px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'MedievalSharp', cursive;
+        }
+        
+        button:hover {
+            background: linear-gradient(to bottom, #a06c33, #8b5a2b);
+        }
+        
+        .ability-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(43, 29, 14, 0.8);
+            border: 2px solid #8b5a2b;
+            border-radius: 10px;
+            z-index: 5;
+        }
+        
+        .ability {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(to bottom, #8b5a2b, #6d4520);
+            border: 2px solid #f0d090;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #f0d090;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ability:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(240, 208, 144, 0.7);
+        }
+        
+        .stats {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(43, 29, 14, 0.8);
+            border: 2px solid #8b5a2b;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .health-bar, .mana-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #8b5a2b;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ff3300, #ff6633);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        .mana-fill {
+            height: 100%;
+            background: linear-gradient(to right, #0066ff, #3399ff);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        .bar-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 1px 1px 1px black;
+            font-size: 12px;
+        }
+        
+        #message {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            z-index: 100;
+        }
+        
+        #message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="start-screen" class="screen">
+            <h1>Dungeon Defender</h1>
+            <p>Brave warrior, the kingdom needs your help! Defeat the monsters and save our realm.</p>
+            <button id="start-button">Begin Quest</button>
+            <div class="instructions">
+                <p>WASD or Arrow Keys to move</p>
+                <p>Click to shoot</p>
+                <p>Press 1-4 for special abilities</p>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
+        
+        <div id="message"></div>
+        
+        <div class="stats hidden">
+            <div>Health: <span id="health-text">100/100</span></div>
+            <div class="health-bar">
+                <div class="health-fill"></div>
+                <div class="bar-text">100/100</div>
+            </div>
+            <div>Mana: <span id="mana-text">100/100</span></div>
+            <div class="mana-bar">
+                <div class="mana-fill"></div>
+                <div class="bar-text">100/100</div>
+            </div>
+        </div>
+        
+        <div class="ability-bar hidden">
+            <div class="ability" data-ability="1">1</div>
+            <div class="ability" data-ability="2">2</div>
+            <div class="ability" data-ability="3">3</div>
+            <div class="ability" data-ability="4">4</div>
+        </div>
+    </div>
+
+   <script>
+    // Get elements
+    const startScreen = document.getElementById('start-screen');
+    const startButton = document.getElementById('start-button');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const messageElement = document.getElementById('message');
+    const statsElement = document.querySelector('.stats');
+    const abilityBar = document.querySelector('.ability-bar');
+    const healthFill = document.querySelector('.health-fill');
+    const manaFill = document.querySelector('.mana-fill');
+    const healthText = document.getElementById('health-text');
+    const manaText = document.getElementById('mana-text');
+    
+    // Game variables
+    let player = {
+        x: 375,
+        y: 275,
+        width: 50,
+        height: 50,
+        speed: 5,
+        color: '#f0d090',
+        health: 100,
+        maxHealth: 100,
+        mana: 100,
+        maxMana: 100,
+        direction: 'down',
+        attackCooldown: 0,
+        attackCooldownMax: 10,
+        shieldActive: false,
+        shieldTimer: 0
+    };
+    
+    let bullets = [];
+    let enemies = [];
+    let effects = [];
+    let gameRunning = false;
+    let mouseX = 0;
+    let mouseY = 0;
+    let score = 0;
+    
+    let keys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+        ArrowUp: false,
+        ArrowLeft: false,
+        ArrowDown: false,
+        ArrowRight: false,
+        '1': false,
+        '2': false,
+        '3': false,
+        '4': false
+    };
+    
+    // Start game
+    function startGame() {
+        console.log("Game starting...");
+        startScreen.classList.add('hidden');
+        canvas.classList.remove('hidden');
+        statsElement.classList.remove('hidden');
+        abilityBar.classList.remove('hidden');
+        gameRunning = true;
+        
+        // Create some enemies
+        for (let i = 0; i < 5; i++) {
+            spawnEnemy();
+        }
+        
+        // Start game loop
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // Spawn enemy
+    function spawnEnemy() {
+        // Spawn enemy at random position outside the canvas
+        let x, y;
+        const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+        
+        switch(side) {
+            case 0: // top
+                x = Math.random() * canvas.width;
+                y = -50;
+                break;
+            case 1: // right
+                x = canvas.width + 50;
+                y = Math.random() * canvas.height;
+                break;
+            case 2: // bottom
+                x = Math.random() * canvas.width;
+                y = canvas.height + 50;
+                break;
+            case 3: // left
+                x = -50;
+                y = Math.random() * canvas.height;
+                break;
+        }
+        
+        const colors = ['#00ff00', '#ff0000', '#0000ff', '#ffff00', '#ff00ff'];
+        
+        enemies.push({
+            x: x,
+            y: y,
+            width: 40,
+            height: 40,
+            speed: 2,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            health: 30,
+            maxHealth: 30
+        });
+    }
+    
+    // Game loop
+    function gameLoop() {
+        if (!gameRunning) return;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Update game objects
+        updatePlayer();
+        updateBullets();
+        updateEnemies();
+        updateEffects();
+        
+        // Draw everything
+        drawPlayer();
+        drawEnemies();
+        drawBullets();
+        drawEffects();
+        
+        // Continue loop
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // Update player
+    function updatePlayer() {
+        // Movement
+        let moveX = 0;
+        let moveY = 0;
+        
+        if ((keys.w || keys.ArrowUp) && player.y > 0) {
+            moveY -= player.speed;
+            player.direction = 'up';
+        }
+        if ((keys.s || keys.ArrowDown) && player.y < canvas.height - player.height) {
+            moveY += player.speed;
+            player.direction = 'down';
+        }
+        if ((keys.a || keys.ArrowLeft) && player.x > 0) {
+            moveX -= player.speed;
+            player.direction = 'left';
+        }
+        if ((keys.d || keys.ArrowRight) && player.x < canvas.width - player.width) {
+            moveX += player.speed;
+            player.direction = 'right';
+        }
+        
+        // Normalize diagonal movement
+        if (moveX !== 0 && moveY !== 0) {
+            const factor = 1 / Math.sqrt(2);
+            moveX *= factor;
+            moveY *= factor;
+        }
+        
+        player.x += moveX;
+        player.y += moveY;
+        
+        // Keep player in bounds
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        
+        // Attack cooldown
+        if (player.attackCooldown > 0) {
+            player.attackCooldown--;
+        }
+        
+        // Mana regeneration
+        if (player.mana < player.maxMana) {
+            player.mana += 0.1;
+            if (player.mana > player.maxMana) {
+                player.mana = player.maxMana;
+            }
+            updateUI();
+        }
+        
+        // Shield timer
+        if (player.shieldActive) {
+            player.shieldTimer--;
+            if (player.shieldTimer <= 0) {
+                player.shieldActive = false;
+                showMessage("Shield expired", "#4a90e2");
+            }
+        }
+        
+        // Check for collision with enemies
+        for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i];
+            if (checkCollision(player, enemy) && !player.shieldActive) {
+                player.health -= 5;
+                updateUI();
+                
+                // Knockback player
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 0) {
+                    player.x += (dx / dist) * 20;
+                    player.y += (dy / dist) * 20;
+                }
+                
+                // Keep player in bounds
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+                
+                // Game over if health is 0
+                if (player.health <= 0) {
+                    gameOver();
+                }
+                
+                break;
+            }
+        }
+        
+        // Check for ability keys
+        if (keys['1'] && player.attackCooldown <= 0) {
+            fireBasicAttack();
+            keys['1'] = false; // Prevent holding key
+        }
+        if (keys['2'] && player.mana >= 20) {
+            fireSpecialAttack();
+            player.mana -= 20;
+            updateUI();
+            keys['2'] = false; // Prevent holding key
+        }
+        if (keys['3'] && player.mana >= 30) {
+            healPlayer();
+            player.mana -= 30;
+            updateUI();
+            keys['3'] = false; // Prevent holding key
+        }
+        if (keys['4'] && player.mana >= 40 && !player.shieldActive) {
+            activateShield();
+            player.mana -= 40;
+            updateUI();
+            keys['4'] = false; // Prevent holding key
+        }
+    }
+    
+    // Update bullets - IMPROVED VERSION
+    function updateBullets() {
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const bullet = bullets[i];
+            
+            // Store previous position
+            const prevX = bullet.x;
+            const prevY = bullet.y;
+            
+            // Move bullet
+            bullet.x += bullet.dx;
+            bullet.y += bullet.dy;
+            
+            // Check if bullet is out of bounds
+            if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                bullets.splice(i, 1);
+                continue;
+            }
+            
+            // Check for collision with enemies
+            let hitEnemy = false;
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                const enemy = enemies[j];
+                
+                // Use line segment collision instead of point collision
+                if (lineRectCollision(prevX, prevY, bullet.x, bullet.y, 
+                                     enemy.x, enemy.y, enemy.width, enemy.height)) {
+                    // Damage enemy
+                    enemy.health -= bullet.power;
+                    
+                    // Create hit effect
+                    createEffect(bullet.x, bullet.y, 'hit');
+                    
+                    // Remove bullet
+                    bullets.splice(i, 1);
+                    hitEnemy = true;
+                    
+                    // Check if enemy is defeated
+                    if (enemy.health <= 0) {
+                        // Create death effect
+                        createEffect(enemy.x + enemy.width/2, enemy.y + enemy.height/2, 'explosion');
+                        
+                        // Remove enemy
+                        enemies.splice(j, 1);
+                        
+                        // Spawn new enemy
+                        setTimeout(spawnEnemy, 1000);
+                        
+                        // Increase score
+                        score += 10;
+                    }
+                    
+                    break;
+                }
+            }
+            
+            if (hitEnemy) {
+                continue;
+            }
+        }
+    }
+    
+    // Update enemies
+    function updateEnemies() {
+        enemies.forEach(enemy => {
+            // Move towards player
+            const dx = player.x - enemy.x;
+            const dy = player.y - enemy.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > 0) {
+                enemy.x += (dx / dist) * enemy.speed;
+                enemy.y += (dy / dist) * enemy.speed;
+            }
+        });
+    }
+    
+    // Update effects
+    function updateEffects() {
+        for (let i = effects.length - 1; i >= 0; i--) {
+            const effect = effects[i];
+            
+            effect.timer--;
+            
+            if (effect.timer <= 0) {
+                effects.splice(i, 1);
+                continue;
+            }
+            
+            if (effect.type === 'explosion') {
+                effect.size += 1;
+                effect.alpha = effect.timer / effect.maxTimer;
+            }
+        }
+    }
+    
+    // Draw player
+    function drawPlayer() {
+        // Draw player body
+        ctx.fillStyle = player.shieldActive ? '#4a90e2' : player.color;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        
+        // Draw eyes and details based on direction
+        ctx.fillStyle = '#663300';
+        
+        switch(player.direction) {
+            case 'down':
+                ctx.fillRect(player.x + 10, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 32, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 15, player.y + 35, 20, 5);
+                break;
+            case 'up':
+                ctx.fillRect(player.x + 10, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 32, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 15, player.y + 30, 20, 5);
+                break;
+            case 'left':
+                ctx.fillRect(player.x + 10, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 10, player.y + 35, 15, 5);
+                break;
+            case 'right':
+                ctx.fillRect(player.x + 32, player.y + 15, 8, 8);
+                ctx.fillRect(player.x + 25, player.y + 35, 15, 5);
+                break;
+        }
+        
+        // Draw shield if active
+        if (player.shieldActive) {
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y + player.height/2, 
+                    player.width/2 + 10, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Add glow effect
+            ctx.strokeStyle = 'rgba(255, 204, 0, 0.3)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y + player.height/2, 
+                    player.width/2 + 10, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+    
+    // Draw enemies
+    function drawEnemies() {
+        enemies.forEach(enemy => {
+            // Draw enemy body
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            
+            // Draw health bar
+            const healthBarWidth = enemy.width;
+            const healthBarHeight = 5;
+            const healthPercent = enemy.health / enemy.maxHealth;
+            
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(enemy.x, enemy.y - 10, healthBarWidth, healthBarHeight);
+            
+            ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : healthPercent > 0.25 ? '#ffff00' : '#ff0000';
+            ctx.fillRect(enemy.x, enemy.y - 10, healthBarWidth * healthPercent, healthBarHeight);
+        });
+    }
+    
+    // Draw bullets
+    function drawBullets() {
+        bullets.forEach(bullet => {
+            ctx.fillStyle = bullet.color;
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+    
+    // Draw effects
+    function drawEffects() {
+        effects.forEach(effect => {
+            if (effect.type === 'explosion') {
+                const gradient = ctx.createRadialGradient(
+                    effect.x, effect.y, 0,
+                    effect.x, effect.y, effect.size
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 0, ' + effect.alpha + ')');
+                gradient.addColorStop(0.5, 'rgba(255, 128, 0, ' + effect.alpha + ')');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, ' + effect.alpha * 0.5 + ')');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'hit') {
+                ctx.fillStyle = 'rgba(255, 255, 255, ' + effect.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (effect.type === 'heal') {
+                ctx.fillStyle = 'rgba(0, 255, 0, ' + effect.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+    
+    // Fire basic attack
+    function fireBasicAttack() {
+        if (player.attackCooldown > 0) return;
+        
+        // Set attack cooldown
+        player.attackCooldown = player.attackCooldownMax;
+        
+        // Calculate bullet direction
+        let dx = mouseX - (player.x + player.width/2);
+        let dy = mouseY - (player.y + player.height/2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist > 0) {
+            dx = dx / dist * 10;
+            dy = dy / dist * 10;
+        } else {
+            // Default direction if mouse is on player
+            switch(player.direction) {
+                case 'up': dx = 0; dy = -10; break;
+                case 'down': dx = 0; dy = 10; break;
+                case 'left': dx = -10; dy = 0; break;
+                case 'right': dx = 10; dy = 0; break;
+            }
+        }
+        
+        // Create bullet
+        const bullet = {
+            x: player.x + player.width/2,
+            y: player.y + player.height/2,
+            size: 8,
+            dx: dx,
+            dy: dy,
+            power: 10,
+            color: '#ffff00'
+        };
+        
+        bullets.push(bullet);
+    }
+    
+    // Fire special attack
+    function fireSpecialAttack() {
+        // Create multiple bullets in a circle
+        const bulletCount = 12;
+        
+        for (let i = 0; i < bulletCount; i++) {
+            const angle = (i / bulletCount) * Math.PI * 2;
+            const dx = Math.cos(angle) * 8;
+            const dy = Math.sin(angle) * 8;
+            
+            const bullet = {
+                x: player.x + player.width/2,
+                y: player.y + player.height/2,
+                size: 8,
+                dx: dx,
+                dy: dy,
+                power: 15,
+                color: '#ff00ff'
+            };
+            
+            bullets.push(bullet);
+        }
+        
+        // Create effect
+        createEffect(player.x + player.width/2, player.y + player.height/2, 'explosion');
+        
+        // Show message
+        showMessage("Special Attack!", "#ff00ff");
+    }
+    
+    // Heal player
+    function healPlayer() {
+        const healAmount = 30;
+        player.health = Math.min(player.maxHealth, player.health + healAmount);
+        
+        // Create effect
+        createEffect(player.x + player.width/2, player.y + player.height/2, 'heal');
+        
+        // Show message
+        showMessage("Healed " + healAmount + " HP", "#00ff00");
+        
+        // Update UI
+        updateUI();
+    }
+    
+    // Activate shield
+    function activateShield() {
+        player.shieldActive = true;
+        player.shieldTimer = 300; // 5 seconds at 60fps
+        
+        // Show message
+        showMessage("Shield Activated!", "#4a90e2");
+    }
+    
+    // Create effect
+    function createEffect(x, y, type) {
+        let effect;
+        
+        switch(type) {
+            case 'explosion':
+                effect = {
+                    x: x,
+                    y: y,
+                    size: 10,
+                    alpha: 1,
+                    type: type,
+                    timer: 30,
+                    maxTimer: 30
+                };
+                break;
+            case 'hit':
+                effect = {
+                    x: x,
+                    y: y,
+                    size: 5,
+                    alpha: 1,
+                    type: type,
+                    timer: 10,
+                    maxTimer: 10
+                };
+                break;
+            case 'heal':
+                effect = {
+                    x: x,
+                    y: y,
+                    size: 30,
+                    alpha: 0.7,
+                    type: type,
+                    timer: 20,
+                    maxTimer: 20
+                };
+                break;
+        }
+        
+        effects.push(effect);
+    }
+    
+    // Show message
+    function showMessage(text, color) {
+        messageElement.textContent = text;
+        messageElement.style.color = color || 'white';
+        messageElement.classList.add('show');
+        
+        setTimeout(() => {
+            messageElement.classList.remove('show');
+        }, 2000);
+    }
+    
+    // Update UI
+    function updateUI() {
+        // Update health bar
+        const healthPercent = player.health / player.maxHealth * 100;
+        healthFill.style.width = healthPercent + '%';
+        healthText.textContent = Math.floor(player.health) + '/' + player.maxHealth;
+        document.querySelector('.health-bar .bar-text').textContent = 
+            Math.floor(player.health) + '/' + player.maxHealth;
+        
+        // Update mana bar
+        const manaPercent = player.mana / player.maxMana * 100;
+        manaFill.style.width = manaPercent + '%';
+        manaText.textContent = Math.floor(player.mana) + '/' + player.maxMana;
+        document.querySelector('.mana-bar .bar-text').textContent = 
+            Math.floor(player.mana) + '/' + player.maxMana;
+    }
+    
+    // Check collision between two objects
+    function checkCollision(obj1, obj2) {
+        return obj1.x < obj2.x + obj2.width &&
+               obj1.x + obj1.width > obj2.x &&
+               obj1.y < obj2.y + obj2.height &&
+               obj1.y + obj1.height > obj2.y;
+    }
+    
+    // Line segment to rectangle collision detection
+    function lineRectCollision(x1, y1, x2, y2, rx, ry, rw, rh) {
+        // Check if either endpoint is inside the rectangle
+        if (pointRectCollision(x1, y1, rx, ry, rw, rh) || 
+            pointRectCollision(x2, y2, rx, ry, rw, rh)) {
+            return true;
+        }
+        
+        // Check if line intersects any of the rectangle's sides
+        // Line vs top edge
+        if (lineLineCollision(x1, y1, x2, y2, rx, ry, rx + rw, ry)) return true;
+        // Line vs right edge
+        if (lineLineCollision(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh)) return true;
+        // Line vs bottom edge
+        if (lineLineCollision(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh)) return true;
+        // Line vs left edge
+        if (lineLineCollision(x1, y1, x2, y2, rx, ry, rx, ry + rh)) return true;
+        
+        return false;
+    }
+
+    // Point to rectangle collision detection
+    function pointRectCollision(px, py, rx, ry, rw, rh) {
+        return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+    }
+
+    // Line segment to line segment collision detection
+    function lineLineCollision(x1, y1, x2, y2, x3, y3, x4, y4) {
+        // Calculate the direction of the lines
+        const uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+        const uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+        
+        // If uA and uB are between 0-1, lines are colliding
+        return (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1);
+    }
+    
+    // Game over
+    function gameOver() {
+        gameRunning = false;
+        showMessage("Game Over! Score: " + score, "#ff0000");
+        
+        // Show start screen after delay
+        setTimeout(() => {
+            startScreen.classList.remove('hidden');
+            canvas.classList.add('hidden');
+            statsElement.classList.add('hidden');
+            abilityBar.classList.add('hidden');
+            
+            // Reset player
+            player.x = 375;
+            player.y = 275;
+            player.health = 100;
+            player.mana = 100;
+            player.shieldActive = false;
+            
+            // Reset game
+            bullets = [];
+            enemies = [];
+            effects = [];
+            score = 0;
+            
+            updateUI();
+        }, 3000);
+    }
+    
+    // Start button event listener
+    startButton.addEventListener('click', startGame);
+    
+    // Keyboard input
+    window.addEventListener('keydown', (e) => {
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = true;
+        }
+    });
+    
+    window.addEventListener('keyup', (e) => {
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = false;
+        }
+    });
+    
+    // Mouse input
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
+    
+    canvas.addEventListener('click', () => {
+        if (gameRunning && player.attackCooldown <= 0) {
+            fireBasicAttack();
+        }
+    });
+    
+    // Ability buttons
+    document.querySelectorAll('.ability').forEach(ability => {
+        ability.addEventListener('click', () => {
+            if (!gameRunning) return;
+            
+            const abilityType = ability.getAttribute('data-ability');
+            
+            switch(abilityType) {
+                case '1':
+                    fireBasicAttack();
+                    break;
+                case '2':
+                    if (player.mana >= 20) {
+                        fireSpecialAttack();
+                        player.mana -= 20;
+                        updateUI();
+                    } else {
+                        showMessage("Not enough mana!", "#0066ff");
+                    }
+                    break;
+                case '3':
+                    if (player.mana >= 30) {
+                        healPlayer();
+                        player.mana -= 30;
+                        updateUI();
+                    } else {
+                        showMessage("Not enough mana!", "#0066ff");
+                    }
+                    break;
+                case '4':
+                    if (player.mana >= 40 && !player.shieldActive) {
+                        activateShield();
+                        player.mana -= 40;
+                        updateUI();
+                    } else if (player.shieldActive) {
+                        showMessage("Shield already active!", "#4a90e2");
+                    } else {
+                        showMessage("Not enough mana!", "#0066ff");
+                    }
+                    break;
+            }
+        });
+    });
+</script>
